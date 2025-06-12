@@ -1,2 +1,1 @@
-# Vitto  
-Mi primer repositorio.
+
