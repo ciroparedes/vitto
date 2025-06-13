@@ -312,6 +312,17 @@ const Maintenance: React.FC = () => {
             <span>→</span>
           </a>
           
+          <a 
+            href="/game.html" 
+            className="cta-button"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{marginBottom: '1.5rem'}}
+          >
+            <span>🎮 Demo Game</span>
+            <span>→</span>
+          </a>
+
           <div className="benefits-grid">
             <div className="benefit-item">
               <span className="benefit-icon">🎮</span>
