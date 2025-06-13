@@ -450,19 +450,8 @@
         </div>
     </div>
 
-    <!-- Audio elements -->
-    <audio id="bgMusic" loop>
-        <source src="https://assets.cofretoken.com/musicofregame.wav" type="audio/wav">
-    </audio>
-    <audio id="userSound">
-        <source src="https://assets.cofretoken.com/usersound.wav" type="audio/wav">
-    </audio>
-    <audio id="cpuSound">
-        <source src="https://assets.cofretoken.com/cpuvs.mp3" type="audio/mp3">
-    </audio>
-    <audio id="endSound">
-        <source src="https://assets.cofretoken.com/endgamecofre.mp3" type="audio/mp3">
-    </audio>
+    <!-- Howler.js CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/howler/2.2.4/howler.min.js"></script>
 
     <script>
         const canvas = document.getElementById('gameCanvas');
@@ -516,49 +505,58 @@
         // Particles
         let particles = [];
 
-        // Audio
+        // Audio con Howler.js
         let soundEnabled = true;
-        const bgMusic = document.getElementById('bgMusic');
-        const userSound = document.getElementById('userSound');
-        const cpuSound = document.getElementById('cpuSound');
-        const endSound = document.getElementById('endSound');
-
-        // Start background music
-        bgMusic.volume = 0.3;
-        bgMusic.play().catch(e => {
-            // Auto-play might be blocked, will start on first interaction
-            document.addEventListener('click', () => {
-                if (soundEnabled) {
-                    bgMusic.play();
-                    // Update button text when sound is activated by click
-                    const btn = document.getElementById('soundToggle');
-                    btn.textContent = '🔊 Sonido: ON';
-                }
-            }, { once: true });
+        
+        // Crear sonidos usando Howler.js con URLs de Cloudflare
+        const bgMusic = new Howl({
+            src: ['https://assets.cofretoken.com/musica-fondo.mp3'],
+            loop: true,
+            volume: 0.3
         });
+        
+        const userSound = new Howl({
+            src: ['https://assets.cofretoken.com/sonido-punto-jugador.mp3'],
+            volume: 0.5
+        });
+        
+        const cpuSound = new Howl({
+            src: ['https://assets.cofretoken.com/sonido-punto-enemigo.wav'],
+            volume: 0.2
+        });
+        
+        const endSound = new Howl({
+            src: ['https://assets.cofretoken.com/musica-fondo.mp3'], // Usando la misma música para el final
+            volume: 0.4
+        });
+
+        // Intentar reproducir música de fondo al cargar
+        document.addEventListener('click', () => {
+            if (soundEnabled && !bgMusic.playing()) {
+                bgMusic.play();
+                // Update button text when sound is activated by click
+                const btn = document.getElementById('soundToggle');
+                btn.textContent = '🔊 Sonido: ON';
+            }
+        }, { once: true });
 
         function toggleSound() {
             soundEnabled = !soundEnabled;
             const btn = document.getElementById('soundToggle');
             if (soundEnabled) {
                 btn.textContent = '🔊 Sonido: ON';
-                bgMusic.play();
+                if (!bgMusic.playing()) {
+                    bgMusic.play();
+                }
             } else {
                 btn.textContent = '🔇 Activar Sonido';
                 bgMusic.pause();
             }
         }
 
-        function playSound(audio) {
+        function playSound(sound) {
             if (soundEnabled) {
-                audio.currentTime = 0;
-                // Reduce CPU sound volume specifically
-                if (audio === cpuSound) {
-                    audio.volume = 0.2;
-                } else {
-                    audio.volume = 0.5;
-                }
-                audio.play();
+                sound.play();
             }
         }
 
