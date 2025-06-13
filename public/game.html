@@ -1,0 +1,1041 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Captura de Orbes</title>
+    <!-- Howler.js para manejo profesional de audio -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/howler/2.2.4/howler.min.js"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: #0a0a0a;
+            color: white;
+            font-family: 'Arial', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            overflow: hidden;
+        }
+
+        #gameContainer {
+            text-align: center;
+            position: relative;
+        }
+
+        #gameCanvas {
+            border: 2px solid #444;
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.5);
+            background: #111;
+            cursor: crosshair;
+        }
+
+        #ui {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 30px;
+            align-items: center;
+            pointer-events: none;
+            background: linear-gradient(135deg, rgba(0,0,0,0.9), rgba(20,20,20,0.9));
+            padding: 15px 40px;
+            border-radius: 50px;
+            border: 2px solid rgba(255,255,255,0.1);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.1);
+        }
+
+        .score-section {
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .score-label {
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            opacity: 0.7;
+            margin-bottom: 5px;
+        }
+
+        .score-value {
+            font-size: 42px;
+            font-weight: bold;
+            line-height: 1;
+            transition: transform 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            position: relative;
+        }
+
+        .score-value.bump {
+            animation: scoreBump 0.4s ease-out;
+        }
+
+        @keyframes scoreBump {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.3); }
+            100% { transform: scale(1); }
+        }
+
+        .player-score {
+            color: #00ff88;
+        }
+
+        .player-score .score-value {
+            text-shadow: 0 0 20px #00ff88, 0 0 40px #00ff88;
+        }
+
+        .cpu-score {
+            color: #ff4444;
+        }
+
+        .cpu-score .score-value {
+            text-shadow: 0 0 20px #ff4444, 0 0 40px #ff4444;
+        }
+
+        .vs-divider {
+            font-size: 24px;
+            color: #666;
+            font-weight: bold;
+            opacity: 0.5;
+        }
+
+        .progress-bar {
+            position: absolute;
+            bottom: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100px;
+            height: 4px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 2px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            transition: width 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            border-radius: 2px;
+        }
+
+        .player-score .progress-fill {
+            background: linear-gradient(90deg, #00ff88, #00cc66);
+            box-shadow: 0 0 10px #00ff88;
+        }
+
+        .cpu-score .progress-fill {
+            background: linear-gradient(90deg, #ff4444, #cc3333);
+            box-shadow: 0 0 10px #ff4444;
+        }
+
+        #gameOver {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.9);
+            padding: 30px;
+            border-radius: 10px;
+            border: 2px solid #444;
+            display: none;
+            z-index: 10;
+        }
+
+        #gameOver h2 {
+            margin: 0 0 20px 0;
+            font-size: 32px;
+        }
+
+        .win {
+            color: #00ff88;
+            text-shadow: 0 0 20px #00ff88;
+        }
+
+        .lose {
+            color: #ff4444;
+            text-shadow: 0 0 20px #ff4444;
+        }
+
+        button {
+            background: #0066cc;
+            color: white;
+            border: none;
+            padding: 10px 30px;
+            font-size: 18px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        button:hover {
+            background: #0088ff;
+            box-shadow: 0 0 10px #0088ff;
+        }
+
+        #instructions {
+            margin-top: 20px;
+            color: #888;
+            font-size: 14px;
+        }
+
+        #logo {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 200px;
+            height: 200px;
+            z-index: 1;
+            opacity: 0.15;
+            pointer-events: none;
+        }
+
+        #rules {
+            position: absolute;
+            bottom: 60px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.8);
+            padding: 15px 30px;
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            font-size: 16px;
+            color: #fff;
+            text-align: center;
+            font-weight: bold;
+        }
+
+        #soundToggle {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.7);
+            border: 1px solid #444;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            z-index: 5;
+            font-size: 14px;
+        }
+
+        #soundToggle:hover {
+            background: rgba(0, 0, 0, 0.9);
+            border-color: #666;
+        }
+
+        #backButton {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(255, 0, 128, 0.8);
+            border: 1px solid #ff0080;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            z-index: 5;
+            font-size: 14px;
+            text-decoration: none;
+        }
+
+        #backButton:hover {
+            background: rgba(255, 0, 128, 1);
+            box-shadow: 0 0 10px #ff0080;
+        }
+
+        /* Responsive Design for Mobile */
+        @media screen and (max-width: 768px) {
+            body {
+                overflow-x: hidden;
+                overflow-y: auto;
+                min-height: 100vh;
+                padding: 10px;
+                box-sizing: border-box;
+            }
+
+            #gameContainer {
+                width: 100%;
+                max-width: 100vw;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+            }
+
+            #gameCanvas {
+                width: 100% !important;
+                max-width: calc(100vw - 20px);
+                height: auto !important;
+                aspect-ratio: 4/3;
+                border: 1px solid #444;
+            }
+
+            #ui {
+                position: relative;
+                top: 0;
+                left: 0;
+                transform: none;
+                margin-bottom: 15px;
+                padding: 10px 20px;
+                gap: 15px;
+                font-size: 14px;
+                width: auto;
+                max-width: calc(100vw - 40px);
+                box-sizing: border-box;
+            }
+
+            .score-value {
+                font-size: 28px;
+            }
+
+            .score-label {
+                font-size: 10px;
+            }
+
+            .vs-divider {
+                font-size: 18px;
+            }
+
+            #logo {
+                width: 120px;
+                height: 120px;
+            }
+
+            #soundToggle {
+                top: 10px;
+                right: 10px;
+                padding: 8px 12px;
+                font-size: 12px;
+            }
+
+            #backButton {
+                top: 10px;
+                left: 10px;
+                padding: 8px 12px;
+                font-size: 12px;
+            }
+
+            #gameOver {
+                width: 90%;
+                max-width: 300px;
+                padding: 20px;
+            }
+
+            #gameOver h2 {
+                font-size: 24px;
+            }
+
+            #instructions {
+                margin-top: 15px;
+                font-size: 12px;
+                padding: 0 10px;
+                text-align: center;
+            }
+
+            #rules {
+                position: relative;
+                bottom: auto;
+                left: auto;
+                transform: none;
+                margin-top: 15px;
+                padding: 10px 20px;
+                font-size: 14px;
+                width: auto;
+                max-width: calc(100vw - 40px);
+                box-sizing: border-box;
+            }
+
+            button {
+                padding: 12px 24px;
+                font-size: 16px;
+                touch-action: manipulation;
+            }
+        }
+
+        @media screen and (max-width: 480px) {
+            body {
+                padding: 5px;
+            }
+
+            #ui {
+                padding: 8px 15px;
+                gap: 10px;
+            }
+
+            .score-value {
+                font-size: 24px;
+            }
+
+            .score-label {
+                font-size: 9px;
+            }
+
+            .vs-divider {
+                font-size: 16px;
+            }
+
+            #logo {
+                width: 80px;
+                height: 80px;
+            }
+
+            #soundToggle, #backButton {
+                padding: 6px 10px;
+                font-size: 11px;
+            }
+
+            #instructions {
+                font-size: 11px;
+            }
+
+            #rules {
+                font-size: 12px;
+                padding: 8px 15px;
+            }
+        }
+
+        @media screen and (max-height: 600px) and (orientation: landscape) {
+            body {
+                overflow-y: auto;
+            }
+
+            #gameContainer {
+                margin: 10px 0;
+            }
+
+            #ui {
+                margin-bottom: 10px;
+            }
+
+            #instructions, #rules {
+                margin-top: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <img id="logo" src="https://assets.cofretoken.com/LogoCofrebukele.webp" alt="Logo">
+    <a id="backButton" href="/">← Volver al Inicio</a>
+    <button id="soundToggle" onclick="toggleSound()">🔇 Activar Sonido</button>
+    
+    <div id="gameContainer">
+        <div id="ui">
+            <div class="score-section player-score">
+                <div class="score-label">JUGADOR</div>
+                <div class="score-value" id="playerScore">0</div>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="playerProgress"></div>
+                </div>
+            </div>
+            <div class="vs-divider">VS</div>
+            <div class="score-section cpu-score">
+                <div class="score-label">CPU</div>
+                <div class="score-value" id="cpuScore">0</div>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="cpuProgress"></div>
+                </div>
+            </div>
+        </div>
+        <canvas id="gameCanvas" width="800" height="600"></canvas>
+        <div id="gameOver">
+            <h2 id="gameOverText"></h2>
+            <button onclick="resetGame()">Jugar de Nuevo</button>
+        </div>
+        <div id="instructions">
+            Mueve el mouse para controlar tu capturador • Captura los orbes azules • Primero en llegar a 50 puntos gana
+        </div>
+        <div id="rules">
+            🏆 ¡Consigue 50 puntos y GANA! 🏆
+        </div>
+    </div>
+
+
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const gameOverScreen = document.getElementById('gameOver');
+        const gameOverText = document.getElementById('gameOverText');
+
+        // Game state
+        let gameRunning = true;
+        let playerScore = 0;
+        let cpuScore = 0;
+        const WINNING_SCORE = 50;
+
+        // Player
+        const player = {
+            x: 100,
+            y: canvas.height / 2,
+            radius: 25,
+            color: '#00ff88',
+            speed: 4.5,
+            targetX: 100,
+            targetY: canvas.height / 2
+        };
+
+        // CPU
+        const cpu = {
+            x: canvas.width - 100,
+            y: canvas.height / 2,
+            radius: 25,
+            color: '#ff4444',
+            speed: 4.5,
+            target: null,
+            reactionTime: 0,
+            predictiveOffset: { x: 0, y: 0 }
+        };
+
+        // Mouse position
+        let mouseX = player.x;
+        let mouseY = player.y;
+
+        // Touch support for mobile
+        let touchX = player.x;
+        let touchY = player.y;
+
+        // Orbs
+        let orbs = [];
+        const orbColors = ['#00aaff', '#ff00aa', '#ffaa00', '#aa00ff'];
+        let orbSpawnTimer = 0;
+        const ORB_SPAWN_RATE = 60; // frames between spawns
+
+        // Particles
+        let particles = [];
+
+        // Audio con Howler.js - URLs correctas según especificaciones
+        let soundEnabled = true;
+        
+        // Música de fondo del juego
+        const bgMusic = new Howl({
+            src: ['https://assets.cofretoken.com/musicofregame.wav'],
+            loop: true,
+            volume: 0.3,
+            html5: true
+        });
+        
+        // Sonido cuando el usuario toma un punto
+        const userSound = new Howl({
+            src: ['https://assets.cofretoken.com/usersound.wav'],
+            volume: 0.6,
+            html5: true
+        });
+        
+        // Sonido cuando la CPU toma un punto (volumen más bajo)
+        const cpuSound = new Howl({
+            src: ['https://assets.cofretoken.com/cpuvs.mp3'],
+            volume: 0.2,
+            html5: true
+        });
+        
+        // Sonido al finalizar el juego
+        const endSound = new Howl({
+            src: ['https://assets.cofretoken.com/endgamecofre.mp3'],
+            volume: 0.7,
+            html5: true
+        });
+
+        // Iniciar música de fondo automáticamente al cargar el juego
+        function startBackgroundMusic() {
+            if (soundEnabled && !bgMusic.playing()) {
+                bgMusic.play().catch(error => {
+                    console.log('Autoplay bloqueado por el navegador, esperando interacción del usuario');
+                    // Fallback: iniciar con primera interacción
+                    document.addEventListener('click', () => {
+                        if (soundEnabled && !bgMusic.playing()) {
+                            bgMusic.play();
+                        }
+                    }, { once: true });
+                });
+            }
+        }
+        
+        // Iniciar música cuando se carga la página
+        window.addEventListener('load', startBackgroundMusic);
+        document.addEventListener('DOMContentLoaded', startBackgroundMusic);
+
+        function toggleSound() {
+            soundEnabled = !soundEnabled;
+            const btn = document.getElementById('soundToggle');
+            if (soundEnabled) {
+                btn.textContent = '🔊 Sonido: ON';
+                if (!bgMusic.playing()) {
+                    bgMusic.play();
+                }
+            } else {
+                btn.textContent = '🔇 Activar Sonido';
+                bgMusic.pause();
+            }
+        }
+
+        function playSound(sound) {
+            if (soundEnabled) {
+                sound.play();
+            }
+        }
+
+        class Orb {
+            constructor() {
+                this.x = Math.random() * (canvas.width - 100) + 50;
+                this.y = Math.random() * (canvas.height - 100) + 50;
+                this.radius = 15;
+                this.color = orbColors[Math.floor(Math.random() * orbColors.length)];
+                this.glowIntensity = 0;
+                this.glowDirection = 1;
+                this.captured = false;
+                this.captureTime = 0;
+            }
+
+            update() {
+                // Glow effect
+                this.glowIntensity += 0.02 * this.glowDirection;
+                if (this.glowIntensity > 1 || this.glowIntensity < 0) {
+                    this.glowDirection *= -1;
+                }
+
+                // Capture animation
+                if (this.captured) {
+                    this.captureTime++;
+                    this.radius *= 0.9;
+                    if (this.radius < 1) {
+                        return false;
+                    }
+                }
+                return true;
+            }
+
+            draw() {
+                // Glow
+                const gradient = ctx.createRadialGradient(this.x, this.y, 0, this.x, this.y, this.radius * 2);
+                gradient.addColorStop(0, this.color + '88');
+                gradient.addColorStop(1, 'transparent');
+                ctx.fillStyle = gradient;
+                ctx.fillRect(this.x - this.radius * 2, this.y - this.radius * 2, this.radius * 4, this.radius * 4);
+
+                // Orb
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                ctx.fillStyle = this.color;
+                ctx.fill();
+                ctx.strokeStyle = this.color + 'ff';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+            }
+        }
+
+        class Particle {
+            constructor(x, y, color) {
+                this.x = x;
+                this.y = y;
+                this.vx = (Math.random() - 0.5) * 8;
+                this.vy = (Math.random() - 0.5) * 8;
+                this.radius = Math.random() * 3 + 1;
+                this.color = color;
+                this.life = 1;
+            }
+
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+                this.vx *= 0.98;
+                this.vy *= 0.98;
+                this.life -= 0.02;
+                return this.life > 0;
+            }
+
+            draw() {
+                ctx.globalAlpha = this.life;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                ctx.fillStyle = this.color;
+                ctx.fill();
+                ctx.globalAlpha = 1;
+            }
+        }
+
+        // Responsive canvas sizing
+        function resizeCanvas() {
+            const container = document.getElementById('gameContainer');
+            const isMobile = window.innerWidth <= 768;
+            
+            if (isMobile) {
+                const maxWidth = Math.min(window.innerWidth - 20, 800);
+                const aspectRatio = 4/3;
+                const newWidth = maxWidth;
+                const newHeight = newWidth / aspectRatio;
+                
+                canvas.style.width = newWidth + 'px';
+                canvas.style.height = newHeight + 'px';
+                
+                // Keep internal resolution for game logic
+                canvas.width = 800;
+                canvas.height = 600;
+            } else {
+                canvas.style.width = '800px';
+                canvas.style.height = '600px';
+                canvas.width = 800;
+                canvas.height = 600;
+            }
+        }
+
+        // Initialize responsive canvas
+        resizeCanvas();
+        window.addEventListener('resize', resizeCanvas);
+        window.addEventListener('orientationchange', () => {
+            setTimeout(resizeCanvas, 100);
+        });
+
+        // Helper function to get scaled coordinates
+        function getScaledCoordinates(clientX, clientY) {
+            const rect = canvas.getBoundingClientRect();
+            const scaleX = canvas.width / rect.width;
+            const scaleY = canvas.height / rect.height;
+            
+            return {
+                x: (clientX - rect.left) * scaleX,
+                y: (clientY - rect.top) * scaleY
+            };
+        }
+
+        // Event listeners for mouse
+        canvas.addEventListener('mousemove', (e) => {
+            const coords = getScaledCoordinates(e.clientX, e.clientY);
+            player.targetX = coords.x;
+            player.targetY = coords.y;
+        });
+
+        // Touch event listeners for mobile
+        canvas.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            const touch = e.touches[0];
+            const coords = getScaledCoordinates(touch.clientX, touch.clientY);
+            player.targetX = coords.x;
+            player.targetY = coords.y;
+        });
+
+        canvas.addEventListener('touchmove', (e) => {
+            e.preventDefault();
+            const touch = e.touches[0];
+            const coords = getScaledCoordinates(touch.clientX, touch.clientY);
+            player.targetX = coords.x;
+            player.targetY = coords.y;
+        });
+
+        canvas.addEventListener('touchend', (e) => {
+            e.preventDefault();
+        });
+
+        // Prevent scrolling when touching the canvas
+        document.body.addEventListener('touchstart', (e) => {
+            if (e.target === canvas) {
+                e.preventDefault();
+            }
+        }, { passive: false });
+
+        document.body.addEventListener('touchend', (e) => {
+            if (e.target === canvas) {
+                e.preventDefault();
+            }
+        }, { passive: false });
+
+        document.body.addEventListener('touchmove', (e) => {
+            if (e.target === canvas) {
+                e.preventDefault();
+            }
+        }, { passive: false });
+
+        // Touch events handled above with responsive scaling
+
+        function updateScore(isPlayer, points = 1) {
+            if (isPlayer) {
+                playerScore += points;
+                const scoreEl = document.getElementById('playerScore');
+                scoreEl.textContent = playerScore;
+                scoreEl.classList.remove('bump');
+                void scoreEl.offsetWidth; // Force reflow
+                scoreEl.classList.add('bump');
+                
+                // Play sound
+                playSound(userSound);
+                
+                // Update progress bar
+                const progress = (playerScore / WINNING_SCORE) * 100;
+                document.getElementById('playerProgress').style.width = progress + '%';
+                
+                // Create score popup
+                createScorePopup(player.x, player.y, '+' + points, player.color);
+            } else {
+                cpuScore += points;
+                const scoreEl = document.getElementById('cpuScore');
+                scoreEl.textContent = cpuScore;
+                scoreEl.classList.remove('bump');
+                void scoreEl.offsetWidth; // Force reflow
+                scoreEl.classList.add('bump');
+                
+                // Play sound
+                playSound(cpuSound);
+                
+                // Update progress bar
+                const progress = (cpuScore / WINNING_SCORE) * 100;
+                document.getElementById('cpuProgress').style.width = progress + '%';
+                
+                // Create score popup
+                createScorePopup(cpu.x, cpu.y, '+' + points, cpu.color);
+            }
+            
+            // Check for winner
+            if (playerScore >= WINNING_SCORE || cpuScore >= WINNING_SCORE) {
+                gameRunning = false;
+                showGameOver();
+            }
+        }
+
+        function createScorePopup(x, y, text, color) {
+            const popup = {
+                x: x,
+                y: y,
+                text: text,
+                color: color,
+                life: 60,
+                vy: -2
+            };
+            particles.push(popup);
+        }
+
+        function spawnOrb() {
+            if (orbs.length < 5) {
+                orbs.push(new Orb());
+            }
+        }
+
+        function createParticles(x, y, color, count = 10) {
+            for (let i = 0; i < count; i++) {
+                particles.push(new Particle(x, y, color));
+            }
+        }
+
+        function checkOrbCapture(entity, orb) {
+            const dx = entity.x - orb.x;
+            const dy = entity.y - orb.y;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+            return distance < entity.radius + orb.radius;
+        }
+
+        function updateCPU() {
+            // CPU AI: Find closest orb
+            if (!cpu.target || cpu.target.captured) {
+                let closestOrb = null;
+                let closestDistance = Infinity;
+                
+                for (let orb of orbs) {
+                    if (!orb.captured) {
+                        const dx = cpu.x - orb.x;
+                        const dy = cpu.y - orb.y;
+                        const distance = Math.sqrt(dx * dx + dy * dy);
+                        
+                        if (distance < closestDistance) {
+                            closestDistance = distance;
+                            closestOrb = orb;
+                        }
+                    }
+                }
+                
+                cpu.target = closestOrb;
+                cpu.reactionTime = Math.random() * 10 + 5; // Random reaction delay
+            }
+
+            // Move towards target with some prediction
+            if (cpu.target && cpu.reactionTime <= 0) {
+                const dx = cpu.target.x - cpu.x;
+                const dy = cpu.target.y - cpu.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                
+                if (distance > 0) {
+                    // Add some predictive movement
+                    const moveX = (dx / distance) * cpu.speed;
+                    const moveY = (dy / distance) * cpu.speed;
+                    
+                    cpu.x += moveX;
+                    cpu.y += moveY;
+                    
+                    // Keep CPU in bounds
+                    cpu.x = Math.max(cpu.radius, Math.min(canvas.width - cpu.radius, cpu.x));
+                    cpu.y = Math.max(cpu.radius, Math.min(canvas.height - cpu.radius, cpu.y));
+                }
+            } else if (cpu.reactionTime > 0) {
+                cpu.reactionTime--;
+            }
+        }
+
+        function showGameOver() {
+            gameOverScreen.style.display = 'block';
+            bgMusic.pause();
+            playSound(endSound);
+            
+            if (playerScore >= WINNING_SCORE) {
+                gameOverText.textContent = '¡GANASTE!';
+                gameOverText.className = 'win';
+            } else {
+                gameOverText.textContent = 'PERDISTE';
+                gameOverText.className = 'lose';
+            }
+        }
+
+        function resetGame() {
+            playerScore = 0;
+            cpuScore = 0;
+            orbs = [];
+            particles = [];
+            gameRunning = true;
+            gameOverScreen.style.display = 'none';
+            
+            // Restart music automáticamente
+            if (soundEnabled) {
+                bgMusic.currentTime = 0;
+                bgMusic.play().catch(error => {
+                    console.log('Error al reiniciar música:', error);
+                });
+            }
+            
+            // Reset scores display
+            document.getElementById('playerScore').textContent = '0';
+            document.getElementById('cpuScore').textContent = '0';
+            document.getElementById('playerProgress').style.width = '0%';
+            document.getElementById('cpuProgress').style.width = '0%';
+            
+            player.x = 100;
+            player.y = canvas.height / 2;
+            player.targetX = player.x;
+            player.targetY = player.y;
+            cpu.x = canvas.width - 100;
+            cpu.y = canvas.height / 2;
+            cpu.target = null;
+        }
+
+        function gameLoop() {
+            if (!gameRunning) {
+                requestAnimationFrame(gameLoop);
+                return;
+            }
+
+            // Clear canvas
+            ctx.fillStyle = 'rgba(17, 17, 17, 0.1)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Update player position (smooth movement towards target)
+            const playerDx = player.targetX - player.x;
+            const playerDy = player.targetY - player.y;
+            const playerDistance = Math.sqrt(playerDx * playerDx + playerDy * playerDy);
+            
+            if (playerDistance > 1) {
+                player.x += (playerDx / playerDistance) * Math.min(player.speed, playerDistance);
+                player.y += (playerDy / playerDistance) * Math.min(player.speed, playerDistance);
+            }
+
+            // Keep player in bounds
+            player.x = Math.max(player.radius, Math.min(canvas.width - player.radius, player.x));
+            player.y = Math.max(player.radius, Math.min(canvas.height - player.radius, player.y));
+
+            // Update CPU
+            updateCPU();
+
+            // Spawn orbs
+            orbSpawnTimer++;
+            if (orbSpawnTimer >= ORB_SPAWN_RATE) {
+                spawnOrb();
+                orbSpawnTimer = 0;
+            }
+
+            // Update and draw orbs
+            orbs = orbs.filter(orb => {
+                const stillExists = orb.update();
+                if (stillExists) {
+                    orb.draw();
+                    
+                    // Check collisions
+                    if (!orb.captured) {
+                        if (checkOrbCapture(player, orb)) {
+                            orb.captured = true;
+                            createParticles(orb.x, orb.y, player.color);
+                            updateScore(true);
+                        } else if (checkOrbCapture(cpu, orb)) {
+                            orb.captured = true;
+                            createParticles(orb.x, orb.y, cpu.color);
+                            updateScore(false);
+                        }
+                    }
+                }
+                return stillExists;
+            });
+
+            // Update and draw particles
+            particles = particles.filter(particle => {
+                if (particle.text) {
+                    // Score popup
+                    particle.y += particle.vy;
+                    particle.life--;
+                    
+                    ctx.font = 'bold 20px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.fillStyle = particle.color;
+                    ctx.globalAlpha = particle.life / 60;
+                    ctx.fillText(particle.text, particle.x, particle.y);
+                    ctx.globalAlpha = 1;
+                    
+                    return particle.life > 0;
+                } else {
+                    // Regular particle
+                    const stillAlive = particle.update();
+                    if (stillAlive) {
+                        particle.draw();
+                    }
+                    return stillAlive;
+                }
+            });
+
+            // Draw player
+            ctx.beginPath();
+            ctx.arc(player.x, player.y, player.radius, 0, Math.PI * 2);
+            const playerGradient = ctx.createRadialGradient(player.x, player.y, 0, player.x, player.y, player.radius);
+            playerGradient.addColorStop(0, player.color + 'ff');
+            playerGradient.addColorStop(1, player.color + '88');
+            ctx.fillStyle = playerGradient;
+            ctx.fill();
+            ctx.strokeStyle = player.color;
+            ctx.lineWidth = 3;
+            ctx.stroke();
+
+            // Draw CPU
+            ctx.beginPath();
+            ctx.arc(cpu.x, cpu.y, cpu.radius, 0, Math.PI * 2);
+            const cpuGradient = ctx.createRadialGradient(cpu.x, cpu.y, 0, cpu.x, cpu.y, cpu.radius);
+            cpuGradient.addColorStop(0, cpu.color + 'ff');
+            cpuGradient.addColorStop(1, cpu.color + '88');
+            ctx.fillStyle = cpuGradient;
+            ctx.fill();
+            ctx.strokeStyle = cpu.color;
+            ctx.lineWidth = 3;
+            ctx.stroke();
+
+            // Draw score goal
+            ctx.font = '14px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillStyle = '#444';
+            ctx.fillText(`Primera a ${WINNING_SCORE} puntos`, canvas.width / 2, canvas.height - 20);
+
+            requestAnimationFrame(gameLoop);
+        }
+
+        // Initialize game
+        gameLoop();
+        
+        // Iniciar música de fondo automáticamente al cargar el juego
+        setTimeout(() => {
+            startBackgroundMusic();
+        }, 500);
+    </script>
+</body>
+</html>
