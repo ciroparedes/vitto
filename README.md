@@ -1,8 +1,13 @@
-# 🎮 COFRE Token - Juego Web Profesional
+# COFRE Token - Professional Landing Page
 
-## 🚀 Despliegue Automático en GitHub Pages
+![COFRE Token](https://img.shields.io/badge/COFRE-Token-orange?style=for-the-badge)
+![Node.js](https://img.shields.io/badge/Node.js-18+-green?style=for-the-badge)
+![Express](https://img.shields.io/badge/Express-4.18+-blue?style=for-the-badge)
+![License](https://img.shields.io/badge/License-MIT-yellow?style=for-the-badge)
 
-Este proyecto está configurado para **despliegue automático** en GitHub Pages usando GitHub Actions.
+## 🚀 Overview
+
+Professional landing page for COFRE Token (ECB) - A revolutionary cryptocurrency with an exclusive rewards program. Built with modern web technologies, featuring glassmorphism design, responsive layout, and optimized performance.
 
 ### ✅ Características del Proyecto
 
