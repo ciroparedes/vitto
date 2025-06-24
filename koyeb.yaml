@@ -1,0 +1,25 @@
+name: cofre-token-landing
+services:
+  - name: web
+    type: web
+    build:
+      type: buildpack
+      buildpack: nodejs
+    instance_type: nano
+    regions:
+      - fra
+    env:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: "8000"
+    health_check:
+      http:
+        path: /
+        port: 8000
+    routes:
+      - path: /
+        port: 8000
+    scaling:
+      min: 1
+      max: 1
