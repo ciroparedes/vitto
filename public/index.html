@@ -229,32 +229,54 @@
         }
 
         .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+
+        .logo:hover {
+            transform: translateY(-1px);
+        }
+
+        .logo-img {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .logo:hover .logo-img {
+            transform: scale(1.05);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+        }
+
+        .logo-text {
             font-size: 1.875rem;
             font-weight: 800;
             background: linear-gradient(135deg, var(--primary-blue) 0%, var(--primary-blue-light) 50%, var(--accent-gold) 100%);
             background-clip: text;
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
-            text-decoration: none;
             letter-spacing: -0.025em;
             position: relative;
-            transition: all 0.3s ease;
         }
 
-        .logo::after {
+        .logo-text::after {
             content: '';
             position: absolute;
             bottom: -2px;
             left: 0;
-            width: 100%;
+            width: 0;
             height: 2px;
             background: linear-gradient(135deg, var(--primary-blue) 0%, var(--accent-gold) 100%);
-            transform: scaleX(0);
-            transition: transform 0.3s ease;
+            transition: width 0.3s ease;
         }
 
-        .logo:hover::after {
-            transform: scaleX(1);
+        .logo:hover .logo-text::after {
+            width: 100%;
         }
 
         .nav-links {
@@ -1066,6 +1088,15 @@
                 display: none;
             }
 
+            .logo-img {
+                width: 35px;
+                height: 35px;
+            }
+
+            .logo-text {
+                font-size: 1.5rem;
+            }
+
             .container,
             .container-wide {
                 padding: 0 1rem;
@@ -1133,6 +1164,15 @@
 
             .nav-container {
                 padding: 0 1rem;
+            }
+
+            .logo-img {
+                width: 30px;
+                height: 30px;
+            }
+
+            .logo-text {
+                font-size: 1.25rem;
             }
 
             .hero-content {
@@ -1265,7 +1305,10 @@
     <!-- Navigation -->
     <nav class="navbar" id="navbar">
         <div class="nav-container">
-            <a href="#inicio" class="logo">COFRE</a>
+            <a href="#inicio" class="logo">
+                <img src="https://assets.cofretoken.com/LogoCofrebukele.webp" alt="COFRE Token Logo" class="logo-img">
+                <span class="logo-text">COFRE</span>
+            </a>
             <ul class="nav-links">
                 <li><a href="#inicio">Inicio</a></li>
                 <li><a href="#caracteristicas">Características</a></li>
